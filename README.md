@@ -17,10 +17,12 @@ To gain access to the desktop, virutal network computing (VNC) protocol is layer
 # Use
 1. Make sure that you can use AWS CLI without issue.  In particular,
 you need valid ~/.aws config and credentials files.
-2. Make sure that you have SSH keys generated in your ~/.ssh.  This can be done by: 
+2. Make sure that you have **unencrypted** SSH keys generated in your ~/.ssh.  This can be done by the following and don't set a password (just press return when it prompts you for a password): 
 ```
-ssh-keygen -t rsa
+ssh-keygen -t rsa -f keyfile.txt
 ```
+src: https://docs.joyent.com/public-cloud/getting-started/ssh-keys/generating-an-ssh-key-manually/manually-generating-your-ssh-key-in-mac-os-x
+
 3. Make sure that Terraform is installed.
 4. Ensure that terraformProvider.tf has appropriate settings for your use.  For example,
 the AWS region may have to change, and that will require a change in the 
