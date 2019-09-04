@@ -1,4 +1,4 @@
-# SolutionsIQ Agile Engineering Course Infrastructure Using Terraform 
+# Technical Lab Infrastructure Using Terraform 
 
 This is a fairly simple Terraform example that can generate as many EC2 instances as necessary for the SolutionsIQ Agile Engineering Course. Some requirements that lead to this solution are:
 
