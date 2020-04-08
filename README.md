@@ -10,7 +10,7 @@ This is a fairly simple Terraform example that can generate as many EC2 instance
   - Provide a git remote repository machine for class demos.
 
 # Design 
-To meet these goals, the decision was made to run on AWS EC2 instances.  These instances are treated as Infrastructure as Code (hence this project).  As written, the instances run Ubuntu 16.04.  There is not a publically available AWS AMI that includes the Ubuntu Desktop.  This project provisions a complete desktop, along with IntelliJ for students to easily write and debug code with.
+To meet these goals, the decision was made to run on AWS EC2 instances.  These instances are treated as Infrastructure as Code (hence this project).  As written, the instances run Ubuntu 18.04.  There is not a publicaly available AWS AMI that includes the Ubuntu Desktop.  This project provisions a complete desktop, along with IntelliJ for students to easily write and debug code with.
 
 To gain access to the desktop, virutal network computing (VNC) protocol is layered on top of the X11 desktop.  To provide a solution that is purely web based, Apache Guacamole is then layered on top of that to render the VNC into HTML5.  This also provides the ability to have several students share desktops, for classroom aid, as well as remote pairing.  Students merely have to point their browser to http://[AWS EC2 Public DNS Name].  Use USERNAME and PASSWORD for access.
 
@@ -268,3 +268,65 @@ aws_security_group.aec_sg_jenkins: Destruction complete
 
 Destroy complete! Resources: 9 destroyed.
 ```
+# Tips to working in the lab
+## How to SSH to a lab machine
+example: $ ssh -i privatekey.txt ubuntu@<ip address>
+The IP address an instance can be found in the AWS console or in the terraform output.
+
+## How to VNC to a lab instance
+example: on MacOS open Screen Sharing app.  Connect to the IP address of the instance via port 5901.  See ProvisionStudent.sh, search for "authorize" XML document to see the password. 
+In the dialog box enter: ip-address:5901
+In the password prompt enter (or whatever password you've used in ProvisionStudent.sh): VNCPASS
+
+# Troubleshooting guide
+
+The most fragile pieces are the hardcoded urls to download iDEA and Eclipse.  As is, the iDEA link will break whenever Jetbrains rolls out a new release. See the note in provisionStudent.sh for a tip on how to discover the new url. Other complexity is getting the various pieces of X11, Tomcat, VNC, and Guacamole working smoothly.
+Remote system X11 <-> VNC (port 5901) <-> Guacd <-> Tomcat (port 8080 but NATed to 80) <-> Guacamole client 
+
+All of the above is configured by provisionStudent.sh. VNCServer is what decides the screen resolution everything uses.
+
+## Problem: Browsing to the EC2 instance's website (port 80) page doesn't load and serve the Guacamole client.
+## Resolution: Either the service isn't running or something is preventing the network connection.
+When everything is working, the interactions happen thusly:
+workstation: web browser port 80 -> AWS Cloud -> ubuntu -> ubuntu:ip tables forward from 80 to 8080 (and the reverse) -> tomcat -> guacamole -> vnc server 
+Trouble shooting starts by probing the above interactions: Using a VNC client (MacOS Screen Sharing), connect directly to port 5901 (X11 displays are mapped to network ports starting with 5900. So display "1:" is accessable at 5901. Display "2:" at 5902, and so on.). If you get the password prompt, then VNC service are running.  So the problem could be a guacamole issuer or the problem is a network issue.
+### find out if Guucamole service is working
+Open a web browser within ubuntu and connect to localhost:8080.  If you see the Guacomale client, then the problem is that the port forwarding didn't work (either the security group or the ubuntu instance).  
+### find out if the problem is the AWS security group 
+* Open a web browser within ubuntu and connect to localhost:80. If you see the Guacomale client, then the problem is the AWS security group. Go fix it's inbound rules. 
+* If the browser on ubuntu can connect via port 80, then check if the ubuntu's instance's if iptables are setup correctly.  It's also possible that they aren't persisnting after a reboot.  See iptables commands in provisionStudent.sh.
+ 
+## Problem: I type in the username and password in the Guacamole client, but it won't accept my credentials.
+## Resolution: The Guacamole server Guacd isn't configured with the password you're trying to use.  SSH in and check ```/etc/guacamole/user-mapping.xml``` and the line:     ```<authorize username="USERNAME" password="PASSWORD">```
+
+## Problem: After Guacamole client accepts my password, it errors saying "failure to connect".
+## Resolution: Either the VNC server isn't running or it is but Guacamole and VNC disagree on some settings and so Guacd and VNC aren't connecting.  First, check that the server is running by doing a SSH and ```ps -eaf | grep vnc']```.
+If you see nothing, then the vnc server isn't running.  Start it by one of the following ways: 1) ```$ vnc4server```
+      2) ```$ systemctl start vnc4server@1```
+Then run the aformentioned ```ps``` command and observer that it's running.  Now try logging in via Guacamole.  If it still doesn't work then perhaps Guacamole and VNC disagree on the password.  
+
+Guacamole has accepts one usename password, and then passes a potentially *different* password to VNC.  Let's check that they match.  Go to ```/etc/guacamole/user-mapping.xml``` and observe what password is being used at:  ```<authorize username="USERNAME" password="PASSWORD">```. This username and password is what Guacamole accepts from the user. What Guacamole passes to VNC is configured in the same file at: 
+```<param name="hostname">localhost</param>
+   <param name="port">5901</param>
+   <param name="password">VNCPASS</param>``` 
+All of the above have to be correct for Guacd to be able to connect to the VNC:
+- hostname should be localhost
+- port 5901 means that we are using X11 display ":1" This can be confirmed by looking at ```ps -eaf | grep vnc``` and it shows something like the below (notice the ":1" and the "5901"):
+```ubuntu    8346     1  6 02:58 ?        00:02:28 Xvnc4 :1 -desktop ip-172-31-82-22:1 (ubuntu) -auth /home/ubuntu/.Xauthority -geometry 1920x1080 -depth 16 -rfbwait 30000 -rfbauth /home/ubuntu/.vnc/passwd -rfbport 5901 -pn -fp /usr/X11R6/lib/X11/fonts/Type1/,/usr/X11R6/lib/X11/fonts/Speedo/,/usr/X11R6/lib/X11/fonts/misc/,/usr/X11R6/lib/X11/fonts/75dpi/,/usr/X11R6/lib/X11/fonts/100dpi/,/usr/share/fonts/X11/misc/,/usr/share/fonts/X11/Type1/,/usr/share/fonts/X11/75dpi/,/usr/share/fonts/X11/100dpi/ -co /etc/X11/rgb
+ubuntu    8356```    
+- password should match what was set using the ```vnc4passwd``` or ```vnc4server``` (the first time the vnc4server command is run it will ask for a password if none has been set).  Since VNC encrypts the password connect a VNC client to port 5901 and try the password set in this configuration file. If that password works, then the password is correct. If the password is incorrect, then set the vnc password using ```vnc4passwd```, then go try to login with guacamole.
+
+##Problem: VNC client fails to connect to the EC2 instance's VNC server.  
+##Resolution:
+- SSH in and check that the VNC process is is running. 
+- Check the EC2 security groups and confirm that they are allowing inbound connections to 5901.
+-If the above two bullets don't resolve the problem, check that the username, group, are as expected in /etc/systemd/system/vnc4server script.
+
+##Problem: Want to change the resolution being sent over Guacamole
+## Resolution: adjust the ```-geometry``` argument in the file /etc/systemd/system/vnc4server@.service
+Once you save the file systemd needs to be told that the file has changed (so it can build symlinks to it), and to restart it:
+```$ sudo systemctl deamon-reload
+   $ sudo systemctl restart vnc4server@1```
+   
+##Problem: When Guacamole sits idle, it loses connection.
+##Resolution: click "reconnect" and resume your activity.
