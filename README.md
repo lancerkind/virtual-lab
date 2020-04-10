@@ -1,18 +1,18 @@
 # Technical Lab Infrastructure Using Terraform 
 
-This is a fairly simple Terraform example that can generate as many EC2 instances as necessary for the SolutionsIQ Agile Engineering Course. Some requirements that lead to this solution are:
+This is a Terraform example that can generate as many EC2 instances as necessary for an Agile Engineering Course. Some requirements that lead to this solution are:
 
   - Need for a development environment with appropriate tools (IDE, etc.)
-  - Need to have zero installation on client machines (no software, no open ports, etc.)  Must run in browser.
+  - Need to have zero installation on client machines (no software, no open ports, etc.).  Must run in browser.
   - Low cost.
   - Easy to setup before class starts.
   - Provide a continuous integration machine for class demos.
   - Provide a git remote repository machine for class demos.
 
 # Design 
-To meet these goals, the decision was made to run on AWS EC2 instances.  These instances are treated as Infrastructure as Code (hence this project).  As written, the instances run Ubuntu 18.04.  There is not a publicaly available AWS AMI that includes the Ubuntu Desktop.  This project provisions a complete desktop, along with IntelliJ for students to easily write and debug code with.
+To meet these goals, the decision was made to run on AWS EC2 instances.  These instances are treated as Infrastructure as Code (hence this project).  As written, the instances run Ubuntu 18.04.  There is not a publicly available AWS AMI that includes the Ubuntu Desktop.  This project provisions a complete desktop, along with IntelliJ for students to easily write and debug code with.
 
-To gain access to the desktop, virutal network computing (VNC) protocol is layered on top of the X11 desktop.  To provide a solution that is purely web based, Apache Guacamole is then layered on top of that to render the VNC into HTML5.  This also provides the ability to have several students share desktops, for classroom aid, as well as remote pairing.  Students merely have to point their browser to http://[AWS EC2 Public DNS Name].  Use USERNAME and PASSWORD for access.
+To gain access to the desktop, virtual network computing (VNC) protocol is layered on top of the X11 desktop.  To provide a solution that is purely web based, Apache Guacamole is then layered on top of that to render the VNC into HTML5.  This also provides the ability to have several students share desktops, for classroom aid, as well as remote pairing.  Students merely have to point their browser to http://[AWS EC2 Public DNS Name].  Use USERNAME and PASSWORD for access.
 
 # Use
 1. Make sure that you can use AWS CLI without issue.  In particular,
@@ -31,7 +31,7 @@ AMI used.
  ```
  terraform apply
  ```
-6. After a whole lot of provisioning, you should see things such as the following.  This was run with two student instances being created. 
+6. After a whole lot of provisioning, you should see things such as the following (a run with two student instances being created). 
 ```
 Apply complete! Resources: 9 added, 0 changed, 0 destroyed.
 
@@ -268,6 +268,7 @@ aws_security_group.aec_sg_jenkins: Destruction complete
 
 Destroy complete! Resources: 9 destroyed.
 ```
+
 # Tips to working in the lab
 ## How to SSH to a lab machine
 example: $ ssh -i privatekey.txt ubuntu@<ip address>
@@ -278,7 +279,12 @@ example: on MacOS open Screen Sharing app.  Connect to the IP address of the ins
 In the dialog box enter: ip-address:5901
 In the password prompt enter (or whatever password you've used in ProvisionStudent.sh): VNCPASS
 
-# Troubleshooting guide
+## How to clone an EC2 instance
+You don't actually clone instances but create an AMI (Amazon Machine Image) from an existing instance. Doing this will create an *AMI*: https://docs.bitnami.com/aws/faq/administration/clone-server/
+To see the AMI go to the "Images" area in the aws console. From there you can launch it which creates an instance.  You'll need to specify the security group (re-use the existing one) and select the correct key. 
+For some reason I had a difficulty in getting VNCserver running on the first launch and had to do a reboot (see Troubleshooting Guide).
+
+# Troubleshooting Guide
 
 The most fragile pieces are the hardcoded urls to download iDEA and Eclipse.  As is, the iDEA link will break whenever Jetbrains rolls out a new release. See the note in provisionStudent.sh for a tip on how to discover the new url. Other complexity is getting the various pieces of X11, Tomcat, VNC, and Guacamole working smoothly.
 Remote system X11 <-> VNC (port 5901) <-> Guacd <-> Tomcat (port 8080 but NATed to 80) <-> Guacamole client 
@@ -330,3 +336,7 @@ Once you save the file systemd needs to be told that the file has changed (so it
    
 ##Problem: When Guacamole sits idle, it loses connection.
 ##Resolution: click "reconnect" and resume your activity.
+
+##Problem: I got a working EC2 instance. I cloned it to an AMI and launched the AMI (using the same security groups and using the right key-store), but the VNC server isn't running.
+##Resolution: rebooting the instance fixed the problem. Simply launching the VNC server unfortunately puts it on display 2 and then guacamole can't find it without reconfiguring.
+  

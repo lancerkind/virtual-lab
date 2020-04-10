@@ -1,7 +1,7 @@
 resource "aws_instance" "ec2_aec_student" {
 #  count = 75
   count = 1
-  #Ubuntu 18.04
+  #AMI for Ubuntu 18.04
   ami = "ami-07d0cf3af28718ef8"
   instance_type = "m4.large"
   key_name = "${aws_key_pair.aec_key_pair.key_name}"

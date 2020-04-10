@@ -1,3 +1,4 @@
 *.tfstate
 privatekey.txt
 privatekey.txt.pub
+*.tfstate.backup

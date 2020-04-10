@@ -1,7 +1,19 @@
 #!/bin/bash
-# UBUNTU 18 WITH GUACAMOLE, TOMCAT8, TIGHTVNC, and developer goodies
+################### PROVISIONS UBUNTU 18 WITH GUACAMOLE, TOMCAT8, TIGHTVNC, and developer goodies ###################
 
-#Install Apps
+function create_debug_log () {
+scriptName=`echo $0 | sed -e "s./._.g" | sed -e "s/\./_/g"`
+exec 1<&-
+exec 2<&-
+exec 1<>~/$scriptName.out
+exec 2>&1
+set -x
+date
+}
+
+create_debug_log
+
+################### Install apps needed for doing sharing X: Tomcat, Guacamole, xfce, vnc server
 sudo apt-get -yqq update && sudo apt-get -yqq upgrade  	#get apt-get ready on a clean install.
 sudo apt-get -yqq install build-essential
 # sudo apt-get -yqq install lib/intserver-dev
@@ -149,19 +161,17 @@ sudo bash -c 'cat <<EOF >> /etc/systemd/system/vnc4server@.service
   WantedBy=multi-user.target
 EOF'
 
-
-
 sudo systemctl daemon-reload                # tell systemctl there's a new config file.
 sudo systemctl start vnc4server@1.service   # starts the service
 sudo systemctl enable vnc4server@1.service  # setup symlinks for restart
 
-# Install Eclipse
+################### Install Eclipse
 sudo apt -yqq install eclipse
 
-# Install Java development kit
+################### Install Java development kit
 sudo apt -yqq install default-jdk
 
-# Install IntelliJ
+################### Install IntelliJ
 # Tips on moving xfce4 config: https://unix.stackexchange.com/questions/353924/how-to-copy-all-my-xfce-settings-between-a-desktop-machine-and-a-laptop
 # and https://www.linuxquestions.org/questions/slackware-14/xfce-menu-desktop-files-location-864839/
 
@@ -190,18 +200,22 @@ EOF'
 sudo chmod 744 /usr/share/applications/intellij.desktop
 sudo chown root:root /usr/share/applications/intellij.desktop
 
-# Port forward 8080 requests to 80
+################### Port forward 8080 requests to 80
 
+# Need to muck about a bit. The iptables-persistent will be interactive unless using the strategy in the gist url.
 #https://linuxconfig.org/how-to-make-iptables-rules-persistent-after-reboot-on-linux
+#https://gist.github.com/alonisser/a2c19f5362c2091ac1e7
 sudo iptables -I INPUT 1 -p tcp --dport 8080 -j ACCEPT
 sudo iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT
 sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8080
 sudo iptables -t nat -I OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-ports 8080
+echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
+echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
 sudo apt install -yqq iptables-persistent
 # sudo sh -c "iptables-save > /etc/iptables.rules"
 # sudo DEBIAN_FRONTEND=noninteractive apt-get install -yqq iptables-persistent
 # 
-#  Cleanup
+###################  Cleanup
 
 # rm -rf /home/ubuntu/guacamole-server-1.0.0.tar.gz
 # rm -rf /home/ubuntu/guacamole-server-1.0.0
