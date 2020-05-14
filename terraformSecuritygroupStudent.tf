@@ -7,6 +7,13 @@ resource "aws_security_group" "aec_sg_student" {
     to_port     = 22
     cidr_blocks = ["0.0.0.0/0"]
   }
+  # X11 or VNC
+  ingress {
+    protocol    = "tcp"
+    from_port   = 5900
+    to_port     = 5920
+    cidr_blocks = ["0.0.0.0/0"]
+  }
   ingress {
     protocol    = "tcp"
     from_port   = 80

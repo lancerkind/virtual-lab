@@ -2,3 +2,6 @@
 privatekey.txt
 privatekey.txt.pub
 *.tfstate.backup
+/.terraform.tfstate.lock.info
+/terraform
+/terraform_old

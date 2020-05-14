@@ -200,8 +200,7 @@ EOF'
 sudo chmod 744 /usr/share/applications/intellij.desktop
 sudo chown root:root /usr/share/applications/intellij.desktop
 
-################### Port forward 8080 requests to 80
-
+################### Port forward 80 requests to 8080, and route 8080 responses to 80, and open ports for VNC connections.
 # Need to muck about a bit. The iptables-persistent will be interactive unless using the strategy in the gist url.
 #https://linuxconfig.org/how-to-make-iptables-rules-persistent-after-reboot-on-linux
 #https://gist.github.com/alonisser/a2c19f5362c2091ac1e7
@@ -209,6 +208,8 @@ sudo iptables -I INPUT 1 -p tcp --dport 8080 -j ACCEPT
 sudo iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT
 sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8080
 sudo iptables -t nat -I OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-ports 8080
+# open ports for VNC connections
+sudo iptables -I INPUT 1 -p tcp --dport 5900:5920 -j ACCEPT
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
 echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
 sudo apt install -yqq iptables-persistent

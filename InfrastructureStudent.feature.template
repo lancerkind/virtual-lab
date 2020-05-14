@@ -9,6 +9,7 @@ Feature: Agile Engineering Course Infrastructure as Code for Student Machines
     And it should be running "java" on port "8080"
     And port "22" should be open
     And port "80" should be open
+    And port "5901" should be open
 
     Examples:
       |aecStudentInstance                        |
