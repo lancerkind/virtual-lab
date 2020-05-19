@@ -1,0 +1,23 @@
+   provisioner "remote-exec" {
+    connection {
+      host = self.public_ip
+      type = "ssh"
+      user = "ubuntu"
+	  private_key = file("/Users/lancer/workspace/virtual-lab/privatekey.txt")
+    }
+    inline = [
+    	"sudo apt-get -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade",
+    ]
+  }
+
+
+    provisioner "remote-exec" {
+    connection {
+      host = self.public_ip
+      type = "ssh"
+      user = "ubuntu"
+	  private_key = file("/Users/lancer/workspace/virtual-lab/privatekey.txt")
+    }
+    #inline = ["sudo reboot now"]
+    inline = ["echo $HOME"]
+  }
