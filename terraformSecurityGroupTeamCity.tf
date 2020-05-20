@@ -1,6 +1,11 @@
 resource "aws_security_group" "aec_sg_teamcity" {
   name = "agile_engineering_class_teamcity"
   description = "Agile Engineering Class - TeamCity SMTP and SSH Access"
+  
+  tags = {
+    Name = "Agile Engineering Class TeamCity"
+  }
+  
   ingress {
     protocol = "tcp"
     from_port = 22
@@ -28,8 +33,5 @@ resource "aws_security_group" "aec_sg_teamcity" {
     protocol = "-1"
     cidr_blocks = [
       "0.0.0.0/0"]
-  }
-  tags {
-    Name = "Agile Engineering Class TeamCity"
   }
 }

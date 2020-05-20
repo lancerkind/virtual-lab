@@ -29,7 +29,7 @@ resource "aws_security_group" "aec_sg_jenkins" {
     cidr_blocks = [
       "0.0.0.0/0"]
   }
-  tags {
+  tags = {
     Name = "Agile Engineering Class Jenkins"
   }
 }

@@ -5,13 +5,22 @@ function create_debug_log () {
 scriptName=`echo $0 | sed -e "s./._.g" | sed -e "s/\./_/g"`
 exec 1<&-
 exec 2<&-
-exec 1<>~/$scriptName.out
+exec 1<>~/$scriptName_terraform_provisioning.out
 exec 2>&1
 set -x
 date
 }
 
-create_debug_log
+# Call the below fuction to create a log of this script in the remote host's home directory.
+# Unfortunately, if you active this logging, because I didn't tee output to the log and to a 
+# file, Terraform gets nervous and declares an error because it doesn't see output and thinks 
+# something is hung up.
+# create_debug_log
+
+# I hope the below settings will keep terraform's remote_exec provider from reporting something is wrong.
+# https://github.com/hashicorp/terraform/issues/18517
+# sudo sed -i '/#ClientAliveInterval/c\ClientAliveInterval 120' /etc/ssh/sshd_config
+# sudo sed -i '/#ClientAliveCountMax/c\ClientAliveCountMax 720' /etc/ssh/sshd_config
 
 ################### Install apps needed for doing sharing X: Tomcat, Guacamole, xfce, vnc server
 sudo apt-get -yqq update && sudo apt-get -yqq upgrade  	#get apt-get ready on a clean install.
@@ -111,7 +120,7 @@ sudo service tomcat8 restart
 /usr/local/sbin/guacd
 
 # Install VNC server
-sudo apt -yqq install vnc4server
+sudo apt-get -yqq install vnc4server
 
 # Install xfce4
 sudo apt-get -yqq install xfce4 xfce4-goodies xfce4-terminal
@@ -166,10 +175,10 @@ sudo systemctl start vnc4server@1.service   # starts the service
 sudo systemctl enable vnc4server@1.service  # setup symlinks for restart
 
 ################### Install Eclipse
-sudo apt -yqq install eclipse
+sudo apt-get -yqq install eclipse
 
 ################### Install Java development kit
-sudo apt -yqq install default-jdk
+sudo apt-get -yqq install default-jdk
 
 ################### Install IntelliJ
 # Tips on moving xfce4 config: https://unix.stackexchange.com/questions/353924/how-to-copy-all-my-xfce-settings-between-a-desktop-machine-and-a-laptop
@@ -212,7 +221,7 @@ sudo iptables -t nat -I OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-p
 sudo iptables -I INPUT 1 -p tcp --dport 5900:5920 -j ACCEPT
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
 echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
-sudo apt install -yqq iptables-persistent
+sudo apt-get install -yqq iptables-persistent
 # sudo sh -c "iptables-save > /etc/iptables.rules"
 # sudo DEBIAN_FRONTEND=noninteractive apt-get install -yqq iptables-persistent
 # 
@@ -221,3 +230,4 @@ sudo apt install -yqq iptables-persistent
 # rm -rf /home/ubuntu/guacamole-server-1.0.0.tar.gz
 # rm -rf /home/ubuntu/guacamole-server-1.0.0
 # rm -rf /home/ubuntu/ideaIC-2017.1.4.tar.gz
+exit 0

@@ -35,7 +35,7 @@ resource "aws_security_group" "aec_sg_student" {
     ipv6_cidr_blocks = ["::/0"]
   }
 
-  tags {
+  tags = {
     Name = "Agile Engineering Class Student"
   }
 }
