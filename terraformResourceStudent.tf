@@ -1,6 +1,6 @@
 resource "aws_instance" "ec2_aec_student" {
 #  count = 75
-  count = 1
+  count = 8
   
   #AMI for Ubuntu 18.04
   ami = "ami-07d0cf3af28718ef8"
