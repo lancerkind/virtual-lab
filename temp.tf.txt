@@ -1,3 +1,4 @@
+   # Install OS updates, update and upgrade existing apps.
    provisioner "remote-exec" {
     connection {
       host = self.public_ip
@@ -6,9 +7,10 @@
 	  private_key = file("/Users/lancer/workspace/virtual-lab/privatekey.txt")
     }
     inline = [
-    	"sudo apt-get -yqq -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade",
+    	"sudo DEBIAN_FRONTEND=noninteractive apt-get -yqq dist-upgrade",   	
     ]
   }
+
 
 This worked!:
 sudo DEBIAN_FRONTEND=noninteractive apt-get -yqq -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade

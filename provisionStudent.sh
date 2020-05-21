@@ -1,31 +1,14 @@
 #!/bin/bash
+#exec > >(tee -a $HOME/provisionStudentDebug.log) 2>&1 #logging, but will cause race conditions problems with ap-get. 
+
 ################### PROVISIONS UBUNTU 18 WITH GUACAMOLE, TOMCAT8, TIGHTVNC, and developer goodies ###################
 
-function create_debug_log () {
-scriptName=`echo $0 | sed -e "s./._.g" | sed -e "s/\./_/g"`
-exec 1<&-
-exec 2<&-
-exec 1<>~/$scriptName_terraform_provisioning.out
-exec 2>&1
-set -x
-date
-}
-
-# Call the below fuction to create a log of this script in the remote host's home directory.
-# Unfortunately, if you active this logging, because I didn't tee output to the log and to a 
-# file, Terraform gets nervous and declares an error because it doesn't see output and thinks 
-# something is hung up.
-# create_debug_log
-
-# I hope the below settings will keep terraform's remote_exec provider from reporting something is wrong.
-# https://github.com/hashicorp/terraform/issues/18517
-# sudo sed -i '/#ClientAliveInterval/c\ClientAliveInterval 120' /etc/ssh/sshd_config
-# sudo sed -i '/#ClientAliveCountMax/c\ClientAliveCountMax 720' /etc/ssh/sshd_config
-
 ################### Install apps needed for doing sharing X: Tomcat, Guacamole, xfce, vnc server
-sudo apt-get -yqq update && sudo apt-get -yqq upgrade  	#get apt-get ready on a clean install.
+sudo DEBIAN_FRONTEND=noninteractive apt-get -yqq dist-upgrade
+sleep 10
+sudo apt-get -yqq update
+sleep 10
 sudo apt-get -yqq install build-essential
-# sudo apt-get -yqq install lib/intserver-dev
 sudo apt-get -yqq install tomcat8 ghostscript jq wget curl
 
 # Add GUACAMOLE_HOME to Tomcat8 ENV
