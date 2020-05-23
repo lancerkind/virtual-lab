@@ -1,4 +1,4 @@
 resource "aws_key_pair" "aec_key_pair" {
-  key_name = "lancer@macattack"
-  public_key = file("/Users/lancer/workspace/virtual-lab/privatekey.txt.pub")
+  key_name = local.aws_key_name
+  public_key = local.aws_public_key
 }

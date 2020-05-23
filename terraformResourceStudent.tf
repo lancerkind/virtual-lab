@@ -1,13 +1,10 @@
 resource "aws_instance" "ec2_aec_student" {
-#  count = 75
-  count = 20
-  
-  #AMI for Ubuntu 18.04
-  ami = "ami-07d0cf3af28718ef8"
+  count = var.per_student_loadout["development_workstations"] * var.number_of_students + local.number_of_instructors
+
+  ami = var.ami[var.aws_region]
   instance_type = "m4.large"
   key_name = aws_key_pair.aec_key_pair.key_name
   security_groups = ["${aws_security_group.aec_sg_student.name}"]
-
 
    # increase SSH timeouts which might address dropped connection with Terraform V.11
    # https://github.com/hashicorp/terraform/issues/18517
@@ -16,7 +13,7 @@ resource "aws_instance" "ec2_aec_student" {
       host = self.public_ip
       type = "ssh"
       user = "ubuntu"
-	  private_key = file("/Users/lancer/workspace/virtual-lab/privatekey.txt")
+	  private_key = local.private_ssh_key
     }
     inline = [
     	"sudo sed -i '/#ClientAliveInterval/c\\ClientAliveInterval 120' /etc/ssh/sshd_config",
@@ -30,7 +27,7 @@ resource "aws_instance" "ec2_aec_student" {
       host = self.public_ip
       type = "ssh"
       user = "ubuntu"
-      private_key = file("/Users/lancer/workspace/virtual-lab/privatekey.txt")
+      private_key = local.private_ssh_key
     }
     script = "provisionStudent.sh"
   }
